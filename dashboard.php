@@ -1,14 +1,13 @@
 <?php
 session_start();
+
 // Vérifier si l'utilisateur est connecté
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-    // Rediriger vers la page de connexion si l'utilisateur n'est pas connecté
     header('Location: login.php');
     exit();
 }
 
-// Récupérer le nom de l'utilisateur depuis la session
-$user_name = $_SESSION['prenom'] . ' ' . $_SESSION['nom'];
+$user_name = $_SESSION['Prenom'] . ' ' . $_SESSION['Nom'];
 
 ?>
 <!DOCTYPE html>
@@ -25,7 +24,6 @@ $user_name = $_SESSION['prenom'] . ' ' . $_SESSION['nom'];
             background-color: #f4f4f4;
         }
 
-        /* Styles pour le menu de navigation */
         nav {
             background-color: #007bff;
             color: #fff;
@@ -64,7 +62,6 @@ $user_name = $_SESSION['prenom'] . ' ' . $_SESSION['nom'];
             padding: 20px;
         }
 
-        /* Responsive menu pour les petits écrans */
         @media (max-width: 768px) {
             nav ul {
                 flex-direction: column;
@@ -88,6 +85,11 @@ $user_name = $_SESSION['prenom'] . ' ' . $_SESSION['nom'];
             <li><a href="settings.php">Paramètres</a></li>
             <li><a href="logout.php">Déconnexion</a></li>
             <li style="margin-left:auto;"><span>Bienvenue, <?php echo htmlspecialchars($user_name); ?></span></li>
+            <li>
+                <form method="post" action="logout.php" style="display:inline;">
+                    <button type="submit" class="logout-btn">Déconnexion</button>
+                </form>
+            </li>
         </ul>
     </nav>
 

@@ -2,7 +2,6 @@
 session_start();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Vérifier si toutes les données attendues sont présentes
     if (isset($_POST['Nom'], $_POST['Prenom'], $_POST['Telephone'], $_POST['email'], $_POST['password']) 
         && !empty(trim($_POST['Nom'])) 
         && !empty(trim($_POST['Prenom'])) 
@@ -10,29 +9,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         && !empty(trim($_POST['email'])) 
         && !empty(trim($_POST['password']))) {
 
-        // Nettoyer et valider les entrées
         $Nom = htmlspecialchars(trim($_POST['Nom']));
         $Prenom = htmlspecialchars(trim($_POST['Prenom']));
         $telephone = htmlspecialchars(trim($_POST['Telephone']));
         $email = filter_var(trim($_POST['email']), FILTER_VALIDATE_EMAIL);
         $password = trim($_POST['password']);
 
-        // Vérification de la validité de l'email
         if ($email === false) {
-            $_SESSION['error'] = "email invalide";
+            $_SESSION['error'] = "Email invalide";
             header('Location: inscription.php');
             exit();
         }
 
-        // Chiffrer le mot de passe
-        $password_hashe = password_hash($password, PASSWORD_BCRYPT);
-
-        // Connexion à la base de données
         include_once "connexion.php";
 
+        // Hachage du mot de passe
+        $password_hashe = password_hash($password, PASSWORD_BCRYPT);
+
         try {
-            $req = $db->prepare("INSERT INTO employe(Nom, Prenom, Telephone, email, password) VALUES(?, ?, ?, ?, ?)");
+            $req = $db->prepare("INSERT INTO employe(nom, prenom, telephone, email, password) VALUES(?, ?, ?, ?, ?)");
             $req->execute([$Nom, $Prenom, $telephone, $email, $password_hashe]);
+            $_SESSION['user_name'] = $Nom; // ou $Prenom, selon ce que vous voulez afficher
+            $_SESSION['user_id'] = $db->lastInsertId(); // ID de l'utilisateur
+            $_SESSION['Prenom'] = $Prenom; // Prénom de l'utilisateur
+            $_SESSION['Nom'] = $Nom; // Nom de l'utilisateur
+            $_SESSION['logged_in'] = true; // Marquer l'utilisateur comme connecté
+
 
             $_SESSION['message'] = "Employé inscrit avec succès";
             header('Location: dashboard.php');
@@ -49,8 +51,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 }
-
 ?>
+
 
 <!DOCTYPE html>
 <html lang="fr">

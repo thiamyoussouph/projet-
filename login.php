@@ -2,77 +2,64 @@
 session_start();
 
 // Vérifier si l'utilisateur est déjà connecté
-if (isset($_SESSION['user_name'])) {
+if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
     header('Location: dashboard.php');
     exit();
 }
 
 // Vérifier si le formulaire a été soumis
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    var_dump($_POST['email']); // Ce débogage est déplacé ici
 
-    // Vérifier si toutes les données attendues sont présentes
     if (isset($_POST['email'], $_POST['password']) 
         && !empty(trim($_POST['email'])) 
         && !empty(trim($_POST['password']))) {
 
-        // Nettoyer et valider les entrées
         $email = filter_var(trim($_POST['email']), FILTER_VALIDATE_EMAIL);
         $password = trim($_POST['password']);
 
-        // Vérification de la validité de l'email
         if ($email === false) {
             $_SESSION['error'] = "Adresse email invalide";
             header('Location: login.php');
             exit();
         }
 
-        // Connexion à la base de données
         include_once "connexion.php";
 
         try {
-            // Rechercher l'utilisateur par email
-// Rechercher l'utilisateur par email
-$stmt = $db->prepare("SELECT id, nom, password FROM employe WHERE email = ?");
-$stmt->execute([$email]);
-$user = $stmt->fetch(PDO::FETCH_ASSOC);
+            $stmt = $db->prepare("SELECT id, nom, prenom, password FROM employe WHERE email = ?");
+            $stmt->execute([$email]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if ($user) {
-    echo "Utilisateur trouvé : ";
-    var_dump($user); // Affichez les informations de l'utilisateur trouvé
+            if ($user) {
+                if (password_verify($password, $user['password'])) {
+                    $_SESSION['user_name'] = $user['nom'];
+                    $_SESSION['user_id'] = $user['id'];
+                    $_SESSION['Prenom'] = $user['prenom']; 
+                    $_SESSION['Nom'] = $user['nom']; 
+                    $_SESSION['logged_in'] = true;
 
-    if (password_verify($password, $user['password'])) {
-        echo "Mot de passe correct.";
-        $_SESSION['user_name'] = $user['nom'];
-        $_SESSION['user_id'] = $user['id'];
-        header('Location: dashboard.php');
-        exit();
-    } else {
-        echo "Mot de passe incorrect.";
-        $_SESSION['error'] = "Email ou mot de passe incorrect";
-    }
-} else {
-    echo "Utilisateur non trouvé avec cet email.";
-    $_SESSION['error'] = "Email ou mot de passe incorrect";
-}
-
-header('Location: login.php');
-exit();
+                    header('Location: dashboard.php');
+                    exit();
+                } else {
+                    $_SESSION['error'] = "Email ou mot de passe incorrect";
+                }
+            } else {
+                $_SESSION['error'] = "Email ou mot de passe incorrect";
+            }
 
         } catch (PDOException $e) {
             error_log("Erreur de connexion : " . $e->getMessage());
             $_SESSION['error'] = "Une erreur est survenue. Veuillez réessayer plus tard.";
-            header('Location: login.php');
-            exit();
         }
+
     } else {
         $_SESSION['error'] = "Tous les champs sont obligatoires.";
-        header('Location: login.php');
-        exit();
     }
+
+    header('Location: login.php');
+    exit();
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -130,6 +117,7 @@ exit();
     <form method="POST" action="login.php">
         <!-- Afficher les messages d'erreur -->
         <?php
+        
         if (isset($_SESSION['error'])) {
             echo '<div class="message error">' . $_SESSION['error'] . '</div>';
             unset($_SESSION['error']); // Supprime le message après l'affichage pour éviter une boucle
